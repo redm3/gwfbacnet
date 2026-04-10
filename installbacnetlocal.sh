@@ -105,8 +105,8 @@ else
     echo "  patched av.c → MAX_ANALOG_VALUES=${MAX_AV}"
 fi
 
-make clean >/dev/null 2>&1
-make BACNET_PORT=linux 2>&1 | tail -1
+#make clean >/dev/null 2>&1
+#make BACNET_PORT=linux 2>&1 | tail -1
 echo "  bacserv compiled"
 
 # ── step 3: install scripts ──────────────────────────────────────────────────
