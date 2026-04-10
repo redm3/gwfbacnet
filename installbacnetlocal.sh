@@ -518,6 +518,7 @@ systemctl enable bacnet.service
 echo "  service enabled"
 
 # ── step 8: cron job ────────────────────────────────────────────────────────
+################################# NEED TO UPDATE THIS TO CRON.15?
 if [ "$NOCRON" = "1" ]; then
     echo ""
     echo "[8/8] Skipping cron job (--no-cron)"
