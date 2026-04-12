@@ -107,7 +107,7 @@ fi
 
 #make clean >/dev/null 2>&1
 #make BACNET_PORT=linux 2>&1 | tail -1
-echo "  bacserv compiled"
+echo "  bacserv compiled (make commented out — uncomment if first build)"
 
 # ── step 3: install scripts ──────────────────────────────────────────────────
 echo ""
@@ -518,16 +518,19 @@ systemctl enable bacnet.service
 echo "  service enabled"
 
 # ── step 8: cron job ────────────────────────────────────────────────────────
-################################# NEED TO UPDATE THIS TO CRON.15?
 if [ "$NOCRON" = "1" ]; then
     echo ""
     echo "[8/8] Skipping cron job (--no-cron)"
 else
 echo ""
-echo "[8/8] Installing cron.hourly poll job..."
+echo "[8/8] Installing 15-minute cron poll job..."
 
+# Remove old cron.hourly if it exists
+rm -f /etc/cron.hourly/bacnet-poll
+
+# Install poll script to /home/pi/sandbox/
 if [ "$NOLOG" = "1" ]; then
-cat > /etc/cron.hourly/bacnet-poll << 'CRONEOF'
+cat > /home/pi/sandbox/bacnet-poll-cron.sh << 'CRONEOF'
 #!/bin/bash
 SCRIPT=/home/pi/sandbox/power_monitor_to_bacnet.sh
 BIST=/home/pi/sandbox/bist_to_bacnet.sh
@@ -535,7 +538,7 @@ sudo -u pi $SCRIPT >/dev/null 2>&1
 sudo $BIST >/dev/null 2>&1
 CRONEOF
 else
-cat > /etc/cron.hourly/bacnet-poll << 'CRONEOF'
+cat > /home/pi/sandbox/bacnet-poll-cron.sh << 'CRONEOF'
 #!/bin/bash
 SCRIPT=/home/pi/sandbox/power_monitor_to_bacnet.sh
 BIST=/home/pi/sandbox/bist_to_bacnet.sh
@@ -549,8 +552,12 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') --- poll end ---" >> $LOG
 CRONEOF
 fi
 
-chmod +x /etc/cron.hourly/bacnet-poll
-echo "  cron job installed"
+chmod +x /home/pi/sandbox/bacnet-poll-cron.sh
+
+# Install as root crontab entry — every 15 minutes
+CRONLINE="*/15 * * * * /home/pi/sandbox/bacnet-poll-cron.sh"
+( crontab -l 2>/dev/null | grep -v bacnet-poll-cron ; echo "$CRONLINE" ) | crontab -
+echo "  15-minute cron job installed"
 fi
 
 # ── start service ────────────────────────────────────────────────────────────
@@ -573,7 +580,7 @@ echo "   AV 100-112  BIST (identity + health)"
 echo ""
 echo " Data source:"
 echo "   Mill PLC ${PLC_IP}:${PLC_PORT} slave ${PLC_SLAVE}"
-echo "   Register 4 (2 words, IEEE 754 word-swap, x0.001 = MWh)"
+echo " Poll interval: every 15 minutes (root crontab)"
 echo ""
 echo " Scripts:"
 echo "   ${INSTALL_DIR}/bacnet-{setup,read,write}.sh"
