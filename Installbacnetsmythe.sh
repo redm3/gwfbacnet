@@ -415,8 +415,8 @@ CRONEOF
 fi
 
 chmod +x /home/pi/sandbox/bacnet-poll-cron.sh
-CRONLINE="*/15 * * * * /home/pi/sandbox/bacnet-poll-cron.sh"
-( crontab -l 2>/dev/null | grep -v bacnet-poll-cron ; echo "$CRONLINE" ) | crontab -
+CRONLINE="*/15 * * * * bash /home/pi/sandbox/bacnet-poll-cron.sh"
+( crontab -u pi -l 2>/dev/null | grep -v bacnet-poll-cron ; echo "$CRONLINE" ) | crontab -u pi -
 echo "  15-minute cron job installed"
 fi
 
