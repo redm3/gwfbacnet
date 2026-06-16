@@ -117,7 +117,7 @@ if [ -z "\$OBJ_TYPE" ] || [ -z "\$OBJ_INST" ]; then
   echo "Usage: \$0 <object-type> <object-instance> [property]" >&2; exit 1
 fi
 RESULT=\$(BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-  \${BACNET_BIN}/bacrp --mac ${SERVER_MAC} \
+  \${BACNET_BIN}/bacrp \
   \${DEVICE_ID} \${OBJ_TYPE} \${OBJ_INST} \${PROPERTY} 2>&1)
 if [ \$? -ne 0 ]; then echo "ERROR: \${RESULT}" >&2; exit 1; fi
 echo "\${RESULT}"
@@ -134,12 +134,12 @@ if [ -z "\$OBJ_TYPE" ] || [ -z "\$OBJ_INST" ] || [ -z "\$VALUE" ]; then
   echo "Usage: \$0 <object-type> <object-instance> <value> [tag] [property] [priority]" >&2; exit 1
 fi
 RESULT=\$(BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-  \${BACNET_BIN}/bacwp --mac ${SERVER_MAC} \
+  \${BACNET_BIN}/bacwp \
   \${DEVICE_ID} \${OBJ_TYPE} \${OBJ_INST} \${PROPERTY} \${PRIORITY} -1 \${TAG} \${VALUE} 2>&1)
 if [ \$? -ne 0 ]; then echo "ERROR: \${RESULT}" >&2; exit 1; fi
 echo "Written: \${OBJ_TYPE} \${OBJ_INST} = \${VALUE}"
 READBACK=\$(BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-  \${BACNET_BIN}/bacrp --mac ${SERVER_MAC} \
+  \${BACNET_BIN}/bacrp \
   \${DEVICE_ID} \${OBJ_TYPE} \${OBJ_INST} \${PROPERTY} 2>&1)
 echo "Readback: \${READBACK}"
 WRITEEOF
@@ -157,7 +157,7 @@ BACNET_BIN=${BACNET_BIN}
 DEVICE_ID=${DEVICE_ID}
 write_name() {
     BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-      \${BACNET_BIN}/bacwp --mac ${SERVER_MAC} \
+      \${BACNET_BIN}/bacwp \
       \${DEVICE_ID} analog-value \$1 object-name 16 -1 7 "\$2" >/dev/null 2>&1
 }
 write_name 0 "D1_Pulse_Count"
@@ -193,7 +193,7 @@ write_av() {
     local INST=\$1
     local VALUE=\$2
     BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-      \${BACNET_BIN}/bacwp --mac ${SERVER_MAC} \
+      \${BACNET_BIN}/bacwp \
       \${BACNET_DEVICE} analog-value \${INST} present-value 16 -1 4 \${VALUE} >/dev/null 2>&1
 }
 E2USRIDREAD=\$(/usr/sbin/i2cget -y 1 0x50 0 b && i2cget -y 1 0x50 1 b && i2cget -y 1 0x50 2 b && i2cget -y 1 0x50 3 b)
@@ -312,7 +312,7 @@ write_av() {
     local INST=\$1
     local VALUE=\$2
     BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-      \${BACNET_BIN}/bacwp --mac ${SERVER_MAC} \
+      \${BACNET_BIN}/bacwp \
       \${BACNET_DEVICE} analog-value \${INST} present-value 16 -1 4 \${VALUE} >/dev/null 2>&1
 }
 # Read pulse registers (2 x 16-bit hex)
@@ -347,7 +347,7 @@ if [ -n "\$BRAW" ]; then
 fi
 # Readback
 READBACK=\$(BACNET_IFACE=veth1 BACNET_IP_PORT=47809 BACNET_BBMD_PORT=47808 BACNET_BBMD_ADDRESS=${VETH0_IP} \
-  \${BACNET_BIN}/bacrp --mac ${SERVER_MAC} \
+  \${BACNET_BIN}/bacrp \
   \${BACNET_DEVICE} analog-value 0 present-value 2>&1)
 echo "D1 Pulse=\${PULSE} Battery=\${BATTERY:-?} (readback: \${READBACK})"
 POLLEOF
@@ -396,7 +396,7 @@ cat > /home/pi/sandbox/bacnet-poll-cron.sh << CRONEOF
 #!/bin/bash
 SCRIPT=/home/pi/sandbox/em300di_to_bacnet.sh
 BIST=/home/pi/sandbox/bist_to_bacnet.sh
-sudo -u pi \$SCRIPT >/dev/null 2>&1
+bash \$SCRIPT >/dev/null 2>&1
 sudo \$BIST >/dev/null 2>&1
 CRONEOF
 else
@@ -406,7 +406,7 @@ SCRIPT=/home/pi/sandbox/em300di_to_bacnet.sh
 BIST=/home/pi/sandbox/bist_to_bacnet.sh
 LOG=/var/log/bacnet-poll.log
 echo "\$(date '+%Y-%m-%d %H:%M:%S') --- poll start ---" >> \$LOG
-RESULT=\$(sudo -u pi \$SCRIPT 2>&1)
+RESULT=\$(bash \$SCRIPT 2>&1)
 echo "\$(date '+%Y-%m-%d %H:%M:%S') em300di: \$RESULT" >> \$LOG
 RESULT=\$(sudo \$BIST 2>&1)
 echo "\$(date '+%Y-%m-%d %H:%M:%S') bist: \$RESULT" >> \$LOG
